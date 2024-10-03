@@ -3,9 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 //@ts-expect-error // because no module type
 import youtubesearchapi from "youtube-search-api";
+import { YT_REGEX } from "@/lib/utils";
 
-export const YT_REGEX =
-  /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com\/(?:watch\?(?!.*\blist=)(?:.*&)?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&]\S+)?$/;
 
 const CreateStreamSchema = z.object({
   creatorId: z.string(),
@@ -70,7 +69,12 @@ export async function POST(req: NextRequest) {
 
     console.log("Created Stream", stream);
 
-    return NextResponse.json({ message: "Added Stream", id: stream.id });
+    return NextResponse.json({
+      ...stream,
+      hasUpvoted: false,
+      upvotes:0
+      
+    });
   } catch (error) {
     console.log(error);
     return NextResponse.json(
@@ -80,9 +84,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
+
+
+
 export async function GET(req: NextRequest) {
   const creatorid = req.nextUrl.searchParams.get("creatorid");
 
+
+  if(!creatorid) {
+    return NextResponse.json({message: "Creator Not Exist" }, {status:403})
+  }
   const stream = await prisma.stream.findMany({
     where: {
       userId: creatorid ?? "",
