@@ -88,17 +88,39 @@ export async function POST(req: NextRequest) {
 
 
 export async function GET(req: NextRequest) {
-  const creatorid = req.nextUrl.searchParams.get("creatorid");
+  const url = req.nextUrl
+  const creatorId = url.searchParams.get("creatorId");
 
+  // console.log("creatorId" , creatorId);
+  
 
-  if(!creatorid) {
-    return NextResponse.json({message: "Creator Not Exist" }, {status:403})
+  if(!creatorId) {
+    return NextResponse.json({message: "Creator Not Exist" }, {status:411})
   }
-  const stream = await prisma.stream.findMany({
+
+  const streams = await prisma.stream.findMany({
     where: {
-      userId: creatorid ?? "",
+      userId: creatorId,
     },
+    include: {
+      _count: {
+        select: {
+          upvotes: true
+        }
+      },
+      upvotes: {
+        where: {
+          userId: creatorId
+        }
+      }
+    }
   });
 
-  return NextResponse.json(stream);
+  return NextResponse.json({
+    streams: streams.map(({_count , ...rest}) => ({
+      ...rest,
+      upvotes: _count.upvotes,
+      hasUpvoted: rest.upvotes.length ? true : false
+    }))
+  });
 }

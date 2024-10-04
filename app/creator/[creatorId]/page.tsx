@@ -1,15 +1,12 @@
 
-type Props = {
-    params: {
-      creatorId: string;
-    };
-};
+import StreamView from "@/components/StreamView";
+
   
-export default function CreatorPage({ params: { creatorId } }: Props) {
-return (
+export default function CreatorPage({ params: {creatorId} }: {params : {creatorId: string}}) {
+  return (
     <div>
-    {creatorId}
+      <StreamView creatorId={creatorId}/>
     </div>
-);
+  );
 }
   

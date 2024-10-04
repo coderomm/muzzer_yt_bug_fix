@@ -18,9 +18,6 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import { YT_REGEX } from "@/lib/utils";
-import { randomUUID } from "node:crypto";
-// import axios from 'axios'
-
 import {Bounce, toast} from 'react-toastify'
 
 interface Video {
@@ -38,7 +35,6 @@ interface Video {
 }
 const REFRESH_INTERVAL_MS = 10 * 1000;
 
-const creatorId = "ad376f8e-e117-4007-a3f4-5c6021176a87";
 
 export default function StreamView({creatorId}:{creatorId:string}) {
   const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
@@ -53,24 +49,25 @@ export default function StreamView({creatorId}:{creatorId:string}) {
 
   const [loading , setloading] = useState(false)
 
-
-
+  
   async function refreshStream() {
+    console.log("Fetching streams for creatorId:", creatorId);
     
-    const res = await fetch('/api/streams/my' , {
+    const res = await fetch(`/api/streams/?creatorId=${creatorId}` , {
       credentials: "include"
     })
     const data = await res.json();
-    setQueue(data.streams)
+    console.log(data);
+    setQueue(data.streams.sort((a: { upvotes: number; },b: { upvotes: number; }) => a.upvotes < b.upvotes ? 1 : -1 ));
   }
 
-
   useEffect(() => {
-    refreshStream()
+    refreshStream();
     const interal = setInterval(() => {
-
+      // refreshStream()
     },REFRESH_INTERVAL_MS)
-  },[])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[creatorId])
 
 
   const handleSubmit = async(e:React.FormEvent) => {
@@ -81,12 +78,22 @@ export default function StreamView({creatorId}:{creatorId:string}) {
       body: JSON.stringify({
         creatorId,
         url: inputLink
-        
       })
     })
     setQueue([...queue , await res.json()])
     setInputLink("")
     setloading(false)
+    toast.success('Added Song', {
+      position:'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme:"light",
+      transition: Bounce
+    })
   }
 
 
@@ -99,8 +106,7 @@ export default function StreamView({creatorId}:{creatorId:string}) {
           ...video,
           upvotes: isUpvote ? (Number(video.upvotes) + 1) : video.upvotes - 1,
           hasUpvoted: !video.hasUpvoted
-        }: video
-        ).sort((a, b) => (b.upvotes) - (a.upvotes)))
+        }: video).sort((a, b) => (b.upvotes) - (a.upvotes)))
 
         const res = await fetch(`/api/streams/${isUpvote ? "upvote" : "downvote"}` , {
           method:"POST",
@@ -120,6 +126,7 @@ export default function StreamView({creatorId}:{creatorId:string}) {
   }
 
   const playNext = () => {
+    console.log(queue.length);
     if(queue.length > 0) {
       setCurrentVideo(queue[0])
       setQueue(queue.slice(1))
@@ -127,7 +134,7 @@ export default function StreamView({creatorId}:{creatorId:string}) {
   }
 
   const handleShare = () => {
-    const sharableLink = `${window.location.hostname}/creator/${creatorId}`
+    const sharableLink = `${window.location.hostname}:3000/creator/${creatorId}`
     navigator.clipboard.writeText(sharableLink).then(() => {
       toast.success('Link copied to clipboard' ,{
         position:'top-right',
@@ -181,7 +188,7 @@ export default function StreamView({creatorId}:{creatorId:string}) {
                       </Button>
                     </div>
                   </div>
-                  {queue.length === 0 && (
+                  {Array.isArray(queue) && queue.length === 0 && (
                     <Card className="w-full">
                     <CardContent className="p-4">
                       <p className="py-8 text-center text-gray-500">
@@ -191,7 +198,7 @@ export default function StreamView({creatorId}:{creatorId:string}) {
                   </Card>
                   )}
                   <div className="space-y-4">
-                    {queue.map((video) => (
+                    {Array.isArray(queue) && queue.map((video) => (
                       <Card
                         key={video.id}
                         className="flex items-center space-x-4 p-4"
