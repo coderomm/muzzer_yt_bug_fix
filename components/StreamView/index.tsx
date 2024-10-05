@@ -19,8 +19,10 @@ import { Input } from "@/components/ui/input";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import { YT_REGEX } from "@/lib/utils";
 import {Bounce, toast} from 'react-toastify'
+import YouTubePlayer from 'youtube-player'
 
 interface Video {
+  extractedId: string;
   id: string;
   type:string;
   title: string;
@@ -36,18 +38,19 @@ interface Video {
 const REFRESH_INTERVAL_MS = 10 * 1000;
 
 
-export default function StreamView({creatorId}:{creatorId:string}) {
+export default function StreamView({creatorId , playVideo = false}:{creatorId:string , playVideo: boolean}) {
   const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
-
+    
   const [queue, setQueue] = useState<Video[]>([]);
-
   const [inputLink , setInputLink] = useState("")
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
-  const [playVideo, setPlayVideo] = useState(false);
+  const [loading , setloading] = useState(false)
+  const [playNextLoader , setPlayNextLoader] = useState(false)
+  // const [playVideo, setPlayVideo] = useState(false);
 
   const videoPlayerRef = React.useRef<HTMLDivElement | null>(null);
 
-  const [loading , setloading] = useState(false)
+
 
   
   async function refreshStream() {
@@ -58,7 +61,8 @@ export default function StreamView({creatorId}:{creatorId:string}) {
     })
     const data = await res.json();
     console.log(data);
-    setQueue(data.streams.sort((a: { upvotes: number; },b: { upvotes: number; }) => a.upvotes < b.upvotes ? 1 : -1 ));
+    setQueue(data.streams.sort((a: { upvotes: number; },b: { upvotes: number; }) => a.upvotes < b.upvotes ? 1 : -1 ))
+    setCurrentVideo(data.activeStream.stream)
   }
 
   useEffect(() => {
@@ -67,7 +71,26 @@ export default function StreamView({creatorId}:{creatorId:string}) {
       // refreshStream()
     },REFRESH_INTERVAL_MS)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[creatorId])
+  },[])
+
+
+  useEffect(() => {
+
+    if (!videoPlayerRef.current || !currentVideo) {
+      return;
+    }
+  
+    const player = YouTubePlayer(videoPlayerRef.current);
+
+    player.loadVideoById(currentVideo?.extractedId);
+
+  
+    player.playVideo();
+
+    player.on('stateChange' ,(event) => {
+      console.log(event.data);
+    });
+  },[currentVideo , videoPlayerRef])
 
 
   const handleSubmit = async(e:React.FormEvent) => {
@@ -80,8 +103,8 @@ export default function StreamView({creatorId}:{creatorId:string}) {
         url: inputLink
       })
     })
-    setQueue([...queue , await res.json()])
     setInputLink("")
+    setQueue([...queue , await res.json()])
     setloading(false)
     toast.success('Added Song', {
       position:'top-right',
@@ -95,10 +118,6 @@ export default function StreamView({creatorId}:{creatorId:string}) {
       transition: Bounce
     })
   }
-
-
-
-  
   const handleVote = async (id: string , isUpvote : boolean) => {
     try {
       setQueue(queue.map(video => 
@@ -125,12 +144,19 @@ export default function StreamView({creatorId}:{creatorId:string}) {
 
   }
 
-  const playNext = () => {
-    console.log(queue.length);
-    if(queue.length > 0) {
-      setCurrentVideo(queue[0])
-      setQueue(queue.slice(1))
-    }
+  const playNext = async() => {
+    alert('hi')
+    try {
+      setPlayNextLoader(true)
+      if(queue.length > 0) {
+        const res = await fetch('/api/streams/next' , {
+          method:"GET",
+        })
+        const data = await res.json()
+        setCurrentVideo(data.stream)
+      }
+    } catch (error) {}
+    setPlayNextLoader(false)
   }
 
   const handleShare = () => {
@@ -271,7 +297,7 @@ export default function StreamView({creatorId}:{creatorId:string}) {
                   </div>
 
                   <form className="space-y-2">
-                    <Input type="text" placeholder="Please paste your link" 
+                    <Input type="text" placeholder="Please paste your link" className="text-black" 
                       onChange={(e) => setInputLink(e.target.value)} 
                     />
                     <Button type="submit" onClick={handleSubmit} className="w-full" disabled={loading}>
@@ -294,14 +320,15 @@ export default function StreamView({creatorId}:{creatorId:string}) {
                   {/* Video Playing */}
                   <div className="space-y-2">
                     <h2 className="text-2xl font-bold">Now Playing</h2>
-
                     <Card>
                       <CardContent className="p-4">
                         {currentVideo ? (
                           <div>
-                            {playVideo ? (
-                              <div ref={videoPlayerRef} className="w-full" />
-                            ) : (
+                            {playVideo ? <>
+                              <div ref={videoPlayerRef} className="w-full object-contain"/>
+                              {/* <iframe width="100%" height="300" src={`https://www.youtube.com/embed/${currentVideo.extractedId}?autoplay=1`}  allow="autoplay"></iframe> */}
+                            </>
+                             : (
                               <>
                                 <Image
                                   height={288}
@@ -321,9 +348,10 @@ export default function StreamView({creatorId}:{creatorId:string}) {
                         )}
                       </CardContent>
                     </Card>
-                    <Button className="w-full" onClick={playNext}>
-                      <Play className="mr-2 h-4 w-4" /> Play next
-                    </Button>
+                    {playVideo &&
+                    <Button disabled={loading} className="w-full" onClick={playNext}>
+                      {playNextLoader ? <Loader2 className="animate-spin size-4" /> : <Play className="mr-2 h-4 w-4" />} Play next
+                    </Button>}
                   </div>
                 </div>
               </div>

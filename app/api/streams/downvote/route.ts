@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/authOptions";
 import prisma from "@/lib/db";
 
-const UpvoteSchema = z.object({
+const DownvoteSchema = z.object({
     streamId : z.string(),
 })
 export async function POST(req: NextRequest) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const user = session.user;
 
     try {
-        const data = UpvoteSchema.parse(await req.json())
+        const data = DownvoteSchema.parse(await req.json())
     
         await prisma.upvote.delete({
             where: {
