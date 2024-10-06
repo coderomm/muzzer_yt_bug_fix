@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     
     const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    if (!session?.user.id) {
         return NextResponse.json(
           {
             message: "Unauthenticated",

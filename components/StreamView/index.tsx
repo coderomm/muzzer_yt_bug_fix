@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Appbar from "@/components/Appbar";
 import {
   Dialog,
@@ -22,25 +22,25 @@ import {Bounce, toast} from 'react-toastify'
 import YouTubePlayer from 'youtube-player'
 
 interface Video {
-  extractedId: string;
-  id: string;
-  type:string;
-  title: string;
-  upvotes: number;
-  smallImg: string;
-  bigImg:string;
-  active:boolean;
-  downvotes: number;
-  hasUpvoted: boolean;
-  url: string;
-  creatorId: string;
+  "extractedId": string;
+  "id": string;
+  "type":string;
+  "title": string;
+  "upvotes": number;
+  "smallImg": string;
+  "bigImg":string;
+  "active":boolean;
+  "downvotes": number;
+  "hasUpvoted": boolean;
+  "url": string;
+  "creatorId": string;
 }
-const REFRESH_INTERVAL_MS = 10 * 1000;
+// const REFRESH_INTERVAL_MS = 10 * 1000;
 
 
 export default function StreamView({creatorId , playVideo = false}:{creatorId:string , playVideo: boolean}) {
   const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
-    
+
   const [queue, setQueue] = useState<Video[]>([]);
   const [inputLink , setInputLink] = useState("")
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -48,50 +48,41 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
   const [playNextLoader , setPlayNextLoader] = useState(false)
   // const [playVideo, setPlayVideo] = useState(false);
 
-  const videoPlayerRef = React.useRef<HTMLDivElement | null>(null);
+  const videoPlayerRef = useRef<HTMLDivElement |null>(null);
 
 
 
   
   async function refreshStream() {
-    console.log("Fetching streams for creatorId:", creatorId);
-    
-    const res = await fetch(`/api/streams/?creatorId=${creatorId}` , {
-      credentials: "include"
-    })
-    const data = await res.json();
-    console.log(data);
-    setQueue(data.streams.sort((a: { upvotes: number; },b: { upvotes: number; }) => a.upvotes < b.upvotes ? 1 : -1 ))
-    setCurrentVideo(data.activeStream.stream)
+    try {
+      console.log("Fetching streams for creatorId:", creatorId);
+      
+      const res = await fetch(`/api/streams/?creatorId=${creatorId}` , {
+        credentials: "include"
+      })
+      const data = await res.json();
+      console.log(data.streams);
+      setQueue(data.streams.sort((a: { upvotes: number; },b: { upvotes: number; }) => a.upvotes < b.upvotes ? 1 : -1 ))
+      setCurrentVideo((video) => {
+        if(video?.id === data.activeStream?.stream?.id){
+          return video
+        }else {
+          return data.activeStream.stream
+        }
+      })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   useEffect(() => {
     refreshStream();
-    const interal = setInterval(() => {
-      // refreshStream()
-    },REFRESH_INTERVAL_MS)
+    
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
 
 
-  useEffect(() => {
-
-    if (!videoPlayerRef.current || !currentVideo) {
-      return;
-    }
   
-    const player = YouTubePlayer(videoPlayerRef.current);
-
-    player.loadVideoById(currentVideo?.extractedId);
-
-  
-    player.playVideo();
-
-    player.on('stateChange' ,(event) => {
-      console.log(event.data);
-    });
-  },[currentVideo , videoPlayerRef])
-
 
   const handleSubmit = async(e:React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +114,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
       setQueue(queue.map(video => 
         video.id === id ? {
           ...video,
-          upvotes: isUpvote ? (Number(video.upvotes) + 1) : video.upvotes - 1,
+          upvotes: isUpvote ? (video.upvotes) + 1 : video.upvotes - 1,
           hasUpvoted: !video.hasUpvoted
         }: video).sort((a, b) => (b.upvotes) - (a.upvotes)))
 
@@ -143,9 +134,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
     }
 
   }
-
   const playNext = async() => {
-    alert('hi')
     try {
       setPlayNextLoader(true)
       if(queue.length > 0) {
@@ -155,9 +144,39 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
         const data = await res.json()
         setCurrentVideo(data.stream)
       }
-    } catch (error) {}
+    } catch (error) {console.error(error)}
     setPlayNextLoader(false)
   }
+
+  useEffect(() => {
+
+    if(!videoPlayerRef.current || !currentVideo?.extractedId) {
+      return
+    }
+    
+    const player = YouTubePlayer(videoPlayerRef.current);
+    player.loadVideoById(currentVideo.extractedId);
+
+    player.playVideo();
+
+    function eventHanlder(event:any) {
+      console.log(event);
+      console.log(event.data)
+
+      if(event.data === 0) {
+        playNext()
+      }
+    }
+    player.on("stateChange" , eventHanlder);
+
+    return () => {
+      player.destroy()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[currentVideo, videoPlayerRef])
+
+
+  
 
   const handleShare = () => {
     const sharableLink = `${window.location.hostname}:3000/creator/${creatorId}`
@@ -173,8 +192,8 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
         theme:"light",
         transition: Bounce
       })
-    }, (err) => {
-      console.error("Could not copy text!")
+    }, (error) => {
+      console.error("Could not copy text!" , error)
       toast.error('Failed to copy link. Please try again' , {
         position:'top-right',
         autoClose: 3000,
@@ -185,7 +204,6 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
         progress: undefined,
         theme:"light",
         transition: Bounce
-
       })
     })
   }
@@ -325,14 +343,14 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                         {currentVideo ? (
                           <div>
                             {playVideo ? <>
-                              <div ref={videoPlayerRef} className="w-full object-contain"/>
+                              <div ref={videoPlayerRef} className="w-full object-contain"/> 
                               {/* <iframe width="100%" height="300" src={`https://www.youtube.com/embed/${currentVideo.extractedId}?autoplay=1`}  allow="autoplay"></iframe> */}
                             </>
                              : (
                               <>
                                 <Image
                                   height={288}
-                                  width={288}
+                                  width={100}
                                   alt={currentVideo.bigImg}
                                   src={currentVideo.bigImg}
                                   className="h-72 w-full rounded object-cover"
@@ -349,7 +367,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                       </CardContent>
                     </Card>
                     {playVideo &&
-                    <Button disabled={loading} className="w-full" onClick={playNext}>
+                    <Button disabled={playNextLoader} className="w-full" onClick={playNext}>
                       {playNextLoader ? <Loader2 className="animate-spin size-4" /> : <Play className="mr-2 h-4 w-4" />} Play next
                     </Button>}
                   </div>
