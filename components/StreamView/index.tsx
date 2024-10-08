@@ -34,6 +34,7 @@ interface Video {
   "hasUpvoted": boolean;
   "url": string;
   "creatorId": string;
+  "streamId": string
 }
 // const REFRESH_INTERVAL_MS = 10 * 1000;
 
@@ -47,7 +48,6 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
   const [loading , setloading] = useState(false)
   const [playNextLoader , setPlayNextLoader] = useState(false)
   // const [playVideo, setPlayVideo] = useState(false);
-
   const videoPlayerRef = useRef<HTMLDivElement |null>(null);
 
 
@@ -208,6 +208,21 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
     })
   }
 
+
+  const handleRemove = async(streamId:string) => {
+    const res = await fetch(`/api/streams/remove?streamId=${streamId}` , {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    if (!res.ok) {
+      throw new Error(`Error: ${res.status}`);
+    }
+    const data = await res.json()
+    setQueue(data)
+  }
+
   return (
     <>
       <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100 ">
@@ -272,7 +287,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                               )}
                               <span>{video.upvotes}</span>
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => handleRemove(video.id)}>
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
