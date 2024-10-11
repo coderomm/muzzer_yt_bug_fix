@@ -14,15 +14,13 @@ datasource db {
 }
 
 model User {
-  id          String        @id @default(uuid())
-  email       String        @unique
-  name        String?
-  password    String?
-  provider    Provider
-  streams     Stream[]      @relation("user")
-  upvotes     Upvote[]
-  added       Stream[]      @relation("addedBy")
-  hostSpaces  Space[]       @relation("hostedBy")
+  id                String        @id @default(uuid())
+  email             String        @unique
+  name              String?
+  password          String?
+  provider          Provider
+  streams           Stream[]      @relation("user")
+  upvotes           Upvote[]
 }
 
 model Stream {
@@ -39,14 +37,9 @@ model Stream {
   createdAt         DateTime          @default(now())
   upvotes           Upvote[]
   userId            String
-  addedById         String
-  user              User              @relation(fields: [userId], references: [id] , name: "user")
-  addedBy           User              @relation(fields: [addedById], references: [id] , name: "addedBy")
-  spaceId           String?      
-  space             Space?            @relation("spaceStreams" , fields: [spaceId] , references: [id])
+  user              User              @relation(fields: [userId], references: [id] , "user")
   CurrentStream     CurrentStream?
 }
-
 
 model CurrentStream {
   id          String        @id @default(uuid())
@@ -67,15 +60,6 @@ model Upvote {
   @@unique([userId , streamId])
 }
 
-model Space {
-  id          String        @id @default(uuid())
-  name        String  
-  streams     Stream[]      @relation("spaceStreams")
-  hostId      String
-  host        User          @relation("hostedBy" , fields: [hostId] , references: [id])
-  isActive    Boolean       @default(true)
-
-}
 
 enum StreamType {
   Spotify

@@ -12,217 +12,249 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown, Play, Trash2, X, Loader2 , Share2} from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  Play,
+  Trash2,
+  X,
+  Loader2,
+  Share2,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import { YT_REGEX } from "@/lib/utils";
-import {Bounce, toast} from 'react-toastify'
-import YouTubePlayer from 'youtube-player'
+import { Bounce, toast } from "react-toastify";
+import YouTubePlayer from "youtube-player";
 
 interface Video {
-  "extractedId": string;
-  "id": string;
-  "type":string;
-  "title": string;
-  "upvotes": number;
-  "smallImg": string;
-  "bigImg":string;
-  "active":boolean;
-  "downvotes": number;
-  "hasUpvoted": boolean;
-  "url": string;
-  "creatorId": string;
-  "streamId": string
+  extractedId: string;
+  id: string;
+  type: string;
+  title: string;
+  upvotes: number;
+  smallImg: string;
+  bigImg: string;
+  active: boolean;
+  downvotes: number;
+  hasUpvoted: boolean;
+  url: string;
+  creatorId: string;
 }
 // const REFRESH_INTERVAL_MS = 10 * 1000;
 
-
-export default function StreamView({creatorId , playVideo = false}:{creatorId:string , playVideo: boolean}) {
+export default function StreamView({
+  creatorId,
+  playVideo = false,
+}: {
+  creatorId: string;
+  playVideo: boolean;
+}) {
   const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
-
-  const [queue, setQueue] = useState<Video[]>([]);
-  const [inputLink , setInputLink] = useState("")
-  const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
-  const [loading , setloading] = useState(false)
-  const [playNextLoader , setPlayNextLoader] = useState(false)
-  // const [playVideo, setPlayVideo] = useState(false);
-  const videoPlayerRef = useRef<HTMLDivElement |null>(null);
-
-
-
   
+  const [queue, setQueue] = useState<Video[]>([]);
+  const [inputLink, setInputLink] = useState("");
+  const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
+  const [loading, setloading] = useState(false);
+  const [playNextLoader, setPlayNextLoader] = useState(false);
+  // const [playVideo, setPlayVideo] = useState(false);
+  const videoPlayerRef = useRef<HTMLDivElement | null>(null);
+
   async function refreshStream() {
     try {
       console.log("Fetching streams for creatorId:", creatorId);
       
-      const res = await fetch(`/api/streams/?creatorId=${creatorId}` , {
-        credentials: "include"
-      })
+      const res = await fetch(`/api/streams/?creatorId=${creatorId}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       console.log(data.streams);
-      setQueue(data.streams.sort((a: { upvotes: number; },b: { upvotes: number; }) => a.upvotes < b.upvotes ? 1 : -1 ))
+      setQueue(
+        data.streams.sort((a: { upvotes: number }, b: { upvotes: number }) =>
+          a.upvotes < b.upvotes ? 1 : -1
+        )
+      );
       setCurrentVideo((video) => {
-        if(video?.id === data.activeStream?.stream?.id){
-          return video
-        }else {
-          return data.activeStream.stream
+        if (video?.id === data.activeStream?.stream?.id) {
+          return video;
+        } else {
+          return data.activeStream.stream;
         }
-      })
+      });
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   }
 
   useEffect(() => {
     refreshStream();
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[])
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  
-
-  const handleSubmit = async(e:React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setloading(true);
-    const res = await fetch('/api/streams' , {
-      method:"POST",
+    const res = await fetch("/api/streams", {
+      method: "POST",
       body: JSON.stringify({
         creatorId,
-        url: inputLink
-      })
-    })
-    setInputLink("")
-    setQueue([...queue , await res.json()])
-    setloading(false)
-    toast.success('Added Song', {
-      position:'top-right',
+        url: inputLink,
+      }),
+    });
+    setInputLink("");
+    setQueue([...queue, await res.json()]);
+    setloading(false);
+    toast.success("Added Song", {
+      position: "top-right",
       autoClose: 3000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      theme:"light",
-      transition: Bounce
-    })
-  }
-  const handleVote = async (id: string , isUpvote : boolean) => {
+      theme: "light",
+      transition: Bounce,
+    });
+  };
+  const handleVote = async (id: string, isUpvote: boolean) => {
     try {
-      setQueue(queue.map(video => 
-        video.id === id ? {
-          ...video,
-          upvotes: isUpvote ? (video.upvotes) + 1 : video.upvotes - 1,
-          hasUpvoted: !video.hasUpvoted
-        }: video).sort((a, b) => (b.upvotes) - (a.upvotes)))
+      setQueue(
+        queue
+          .map((video) =>
+            video.id === id
+              ? {
+                  ...video,
+                  upvotes: isUpvote ? video.upvotes + 1 : video.upvotes - 1,
+                  hasUpvoted: !video.hasUpvoted,
+                }
+              : video
+          )
+          .sort((a, b) => b.upvotes - a.upvotes)
+      );
 
-        const res = await fetch(`/api/streams/${isUpvote ? "upvote" : "downvote"}` , {
-          method:"POST",
+      const res = await fetch(
+        `/api/streams/${isUpvote ? "upvote" : "downvote"}`,
+        {
+          method: "POST",
           body: JSON.stringify({
-            streamId : id,
-          })
-        })
-
-        if (!res.ok) {
-          throw new Error('Failed to upvote the stream');
+            streamId: id,
+          }),
         }
+      );
 
-    } catch (error) {
-      console.error('Error while voting:', error);
-    }
-
-  }
-  const playNext = async() => {
-    try {
-      setPlayNextLoader(true)
-      if(queue.length > 0) {
-        const res = await fetch('/api/streams/next' , {
-          method:"GET",
-        })
-        const data = await res.json()
-        setCurrentVideo(data.stream)
+      if (!res.ok) {
+        throw new Error("Failed to upvote the stream");
       }
-    } catch (error) {console.error(error)}
-    setPlayNextLoader(false)
-  }
+    } catch (error) {
+      console.error("Error while voting:", error);
+    }
+  };
+  const playNext = async () => {
+    try {
+      setPlayNextLoader(true);
+      if (queue.length > 0) {
+        const res = await fetch("/api/streams/next", {
+          method: "GET",
+        });
+        const data = await res.json();
+        setCurrentVideo(data.stream);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    setPlayNextLoader(false);
+  };
 
   useEffect(() => {
-
-    if(!videoPlayerRef.current || !currentVideo?.extractedId) {
-      return
+    if (!videoPlayerRef.current || !currentVideo?.extractedId) {
+      return;
     }
-    
+
     const player = YouTubePlayer(videoPlayerRef.current);
     player.loadVideoById(currentVideo.extractedId);
 
     player.playVideo();
 
-    function eventHanlder(event:any) {
+    function eventHanlder(event: any) {
       console.log(event);
-      console.log(event.data)
+      console.log(event.data);
 
-      if(event.data === 0) {
-        playNext()
+      if (event.data === 0) {
+        playNext();
       }
     }
-    player.on("stateChange" , eventHanlder);
+    player.on("stateChange", eventHanlder);
 
     return () => {
-      player.destroy()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[currentVideo, videoPlayerRef])
-
-
-  
+      player.destroy();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo, videoPlayerRef]);
 
   const handleShare = () => {
-    const sharableLink = `${window.location.hostname}:3000/creator/${creatorId}`
-    navigator.clipboard.writeText(sharableLink).then(() => {
-      toast.success('Link copied to clipboard' ,{
-        position:'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme:"light",
-        transition: Bounce
-      })
-    }, (error) => {
-      console.error("Could not copy text!" , error)
-      toast.error('Failed to copy link. Please try again' , {
-        position:'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme:"light",
-        transition: Bounce
-      })
-    })
-  }
-
-
-  const handleRemove = async(streamId:string) => {
-    const res = await fetch(`/api/streams/remove?streamId=${streamId}` , {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
+    const sharableLink = `${window.location.hostname}:3000/creator/${creatorId}`;
+    navigator.clipboard.writeText(sharableLink).then(
+      () => {
+        toast.success("Link copied to clipboard", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+          transition: Bounce,
+        });
       },
-    })
+      (error) => {
+        console.error("Could not copy text!", error);
+        toast.error("Failed to copy link. Please try again", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+          transition: Bounce,
+        });
+      }
+    );
+  };
+  const handleRemove = async (streamId: string) => {
+    const res = await fetch(`/api/streams/remove?streamId=${streamId}`, {
+      method: "DELETE"
+    });
     if (!res.ok) {
       throw new Error(`Error: ${res.status}`);
     }
-    const data = await res.json()
-    setQueue(data)
-  }
+    const data = await res.json();
+    setQueue(data);
+  };
 
+  const handleEmptyQueue = async () => {
+    try {
+      const res = await fetch(`/api/streams/empty-queue` , {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      })
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
+      }
+      const data = await res.json();
+      console.log(data.message); 
+      setQueue(data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
   return (
     <>
       <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100 ">
@@ -237,7 +269,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                     <h2 className="text-3xl font-bold">Upcoming Songs</h2>
                     <div className="flex space-x-2">
                       <Button onClick={handleShare}>
-                        <Share2 className="mr-2 h-4 w-4"/> Share
+                        <Share2 className="mr-2 h-4 w-4" /> Share
                       </Button>
                       <Button
                         onClick={() => setIsEmptyQueueDialogOpen(true)}
@@ -249,51 +281,59 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                   </div>
                   {Array.isArray(queue) && queue.length === 0 && (
                     <Card className="w-full">
-                    <CardContent className="p-4">
-                      <p className="py-8 text-center text-gray-500">
-                        No videos in queue
-                      </p>
-                    </CardContent>
-                  </Card>
+                      <CardContent className="p-4">
+                        <p className="py-8 text-center text-gray-500">
+                          No videos in queue
+                        </p>
+                      </CardContent>
+                    </Card>
                   )}
                   <div className="space-y-4">
-                    {Array.isArray(queue) && queue.map((video) => (
-                      <Card
-                        key={video.id}
-                        className="flex items-center space-x-4 p-4"
-                      >
-                        <Image
-                          height={80}
-                          width={128}
-                          src={video.smallImg}
-                          alt={`Thumbnail for ${video.title}`}
-                          className="w-32 h-20 rounded object-cover"
-                        />
-                        <div className="flex-grow">
-                          <h3 className="font-semibold">{video.title}</h3>
-                          <div className="mt-2 flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex items-center space-x-1"
-                              onClick={() => 
-                                handleVote(video.id , video.hasUpvoted ? true : false)
-                              }
-                            >
-                              {video.hasUpvoted ? (
-                                <ChevronDown className=" h-4 w-4"/>
-                              ) : (
-                                <ChevronUp className="h-4 w-4"/>
-                              )}
-                              <span>{video.upvotes}</span>
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleRemove(video.id)}>
-                              <X className="h-4 w-4" />
-                            </Button>
+                    {Array.isArray(queue) &&
+                      queue.map((video) => (
+                        <Card
+                          key={video.id}
+                          className="flex items-center space-x-4 p-4"
+                        >
+                          <Image
+                            height={80}
+                            width={128}
+                            src={video.smallImg}
+                            alt={`Thumbnail for ${video.title}`}
+                            className="w-32 h-20 rounded object-cover"
+                          />
+                          <div className="flex-grow">
+                            <h3 className="font-semibold">{video.title}</h3>
+                            <div className="mt-2 flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center space-x-1"
+                                onClick={() =>
+                                  handleVote(
+                                    video.id,
+                                    video.hasUpvoted ? true : false
+                                  )
+                                }
+                              >
+                                {video.hasUpvoted ? (
+                                  <ChevronDown className=" h-4 w-4" />
+                                ) : (
+                                  <ChevronUp className="h-4 w-4" />
+                                )}
+                                <span>{video.upvotes}</span>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRemove(video.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      ))}
                   </div>
                 </div>
               </div>
@@ -301,7 +341,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                 open={isEmptyQueueDialogOpen}
                 onOpenChange={setIsEmptyQueueDialogOpen}
               >
-                <DialogContent>
+                <DialogContent >
                   <DialogHeader>
                     <DialogTitle>Empty Queue</DialogTitle>
                     <DialogDescription>
@@ -316,7 +356,7 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                     >
                       Cancel
                     </Button>
-                    <Button variant="destructive">Empty Queue</Button>
+                    <Button variant="destructive" onClick={handleEmptyQueue}>Empty Queue</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -330,11 +370,23 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                   </div>
 
                   <form className="space-y-2">
-                    <Input type="text" placeholder="Please paste your link" className="text-black" 
-                      onChange={(e) => setInputLink(e.target.value)} 
+                    <Input
+                      type="text"
+                      placeholder="Please paste your link"
+                      className="text-black"
+                      onChange={(e) => setInputLink(e.target.value)}
                     />
-                    <Button type="submit" onClick={handleSubmit} className="w-full" disabled={loading}>
-                      {loading ? <Loader2 className="size-4 animate-spin"/>: "Add to Queue"}
+                    <Button
+                      type="submit"
+                      onClick={handleSubmit}
+                      className="w-full"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        "Add to Queue"
+                      )}
                     </Button>
 
                     <Button type="submit" className="w-full">
@@ -342,13 +394,16 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                     </Button>
                   </form>
 
-                  {inputLink && inputLink.match(YT_REGEX) && !loading &&
+                  {inputLink && inputLink.match(YT_REGEX) && !loading && (
                     <Card>
                       <CardContent className="p-4">
-                        <LiteYouTubeEmbed title="" id={inputLink.split("?v=")[1]} />
+                        <LiteYouTubeEmbed
+                          title=""
+                          id={inputLink.split("?v=")[1]}
+                        />
                       </CardContent>
                     </Card>
-                  }
+                  )}
 
                   {/* Video Playing */}
                   <div className="space-y-2">
@@ -357,11 +412,15 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                       <CardContent className="p-4">
                         {currentVideo ? (
                           <div>
-                            {playVideo ? <>
-                              <div ref={videoPlayerRef} className="w-full object-contain"/> 
-                              {/* <iframe width="100%" height="300" src={`https://www.youtube.com/embed/${currentVideo.extractedId}?autoplay=1`}  allow="autoplay"></iframe> */}
-                            </>
-                             : (
+                            {playVideo ? (
+                              <>
+                                <div
+                                  ref={videoPlayerRef}
+                                  className="w-full object-contain"
+                                />
+                                {/* <iframe width="100%" height="300" src={`https://www.youtube.com/embed/${currentVideo.extractedId}?autoplay=1`}  allow="autoplay"></iframe> */}
+                              </>
+                            ) : (
                               <>
                                 <Image
                                   height={288}
@@ -381,10 +440,20 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
                         )}
                       </CardContent>
                     </Card>
-                    {playVideo &&
-                    <Button disabled={playNextLoader} className="w-full" onClick={playNext}>
-                      {playNextLoader ? <Loader2 className="animate-spin size-4" /> : <Play className="mr-2 h-4 w-4" />} Play next
-                    </Button>}
+                    {playVideo && (
+                      <Button
+                        disabled={playNextLoader}
+                        className="w-full"
+                        onClick={playNext}
+                      >
+                        {playNextLoader ? (
+                          <Loader2 className="animate-spin size-4" />
+                        ) : (
+                          <Play className="mr-2 h-4 w-4" />
+                        )}{" "}
+                        Play next
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -395,4 +464,3 @@ export default function StreamView({creatorId , playVideo = false}:{creatorId:st
     </>
   );
 }
-

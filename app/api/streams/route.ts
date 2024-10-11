@@ -14,6 +14,14 @@ const CreateStreamSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+
+  const session = await getServerSession(authOptions) 
+
+  const user = session?.user;
+
+  if(!user?.id) {
+    return NextResponse.json({message: "Unauthenticated"} , {status: 403})
+  }
   try {
     const data = await CreateStreamSchema.parse(await req.json());
 
@@ -65,11 +73,10 @@ export async function POST(req: NextRequest) {
             : thumbnails[thumbnails.length - 1].url) ??
           "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
         bigImg: thumbnails[thumbnails.length - 1].url ?? "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
+      
       },
     });
-
     console.log("Created Stream", stream);
-
     return NextResponse.json({
       ...stream,
       hasUpvoted: false,
