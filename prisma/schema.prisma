@@ -21,6 +21,7 @@ model User {
   provider          Provider
   streams           Stream[]      @relation("user")
   upvotes           Upvote[]
+  addedStreams      Stream[]      @relation("addedBy")
 }
 
 model Stream {
@@ -37,7 +38,9 @@ model Stream {
   createdAt         DateTime          @default(now())
   upvotes           Upvote[]
   userId            String
-  user              User              @relation(fields: [userId], references: [id] , "user")
+  addedBy           String?
+  addedByUser       User?               @relation("addedBy", fields: [addedBy], references: [id])
+  user              User               @relation("user", fields: [userId], references: [id])
   CurrentStream     CurrentStream?
 }
 

@@ -13,6 +13,9 @@ const CreateStreamSchema = z.object({
   url: z.string(),
 });
 
+
+const MAX_QUEUE_LEN = 10;
+
 export async function POST(req: NextRequest) {
 
   const session = await getServerSession(authOptions) 
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
     const isYT = data.url.match(YT_REGEX);
     const videoId = data.url.match(YT_REGEX)?.[1];
 
-    if (!isYT) {
+    if (!isYT || !videoId) {
       return NextResponse.json(
         { message: "Invalid Youtube Url format" },
         { status: 400 }
@@ -43,6 +46,33 @@ export async function POST(req: NextRequest) {
     const res = await youtubesearchapi.GetVideoDetails(videoId);
     console.log(res.title);
     console.log(res.thumbnail.thumbnails);
+
+
+    if(user.id !== data.creatorId) {
+      await prisma.stream.count({
+        where: {
+          userId: data.creatorId,
+          addedBy: user.id,
+        }
+      })
+    }
+    const duplicateSong = await prisma.stream.findFirst({
+      where: {
+        userId: data.creatorId,
+        extractedId: videoId,
+      },
+    });
+    if (duplicateSong) {
+      return NextResponse.json(
+        {
+          message: "This song was already added in the last 10 minutes",
+        },
+        {
+          status: 429,
+        },
+      );
+    }
+    
     const thumbnails = res.thumbnail.thumbnails;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     thumbnails.sort((a:any, b:any) => a.upvotes < b.upvotes ? -1 : 1);
@@ -60,9 +90,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+
+
+    const existingActiveStreams = await prisma.stream.count({
+      where: {
+        userId: data.creatorId
+      }
+    })
+
+    if (existingActiveStreams >= MAX_QUEUE_LEN) {
+      return NextResponse.json(
+        {
+          message: "Queue is full",
+        },
+        {
+          status: 429,
+        },
+      );
+    }
+    
     const stream = await prisma.stream.create({
       data: {
-        userId: data.creatorId,
+        userId:data.creatorId,
+        addedBy:user.id,
         url: data.url,
         extractedId,
         type: "Youtube",
@@ -92,9 +142,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-
-
-
 export async function GET(req: NextRequest) {
   const url = req.nextUrl
   const creatorId = url.searchParams.get("creatorId");
@@ -123,7 +170,8 @@ export async function GET(req: NextRequest) {
   const [streams , activeStream] = await Promise.all([await prisma.stream.findMany({
     where: {
       userId: creatorId,
-      played: false
+      played: false,
+      addedBy: user.id
     },
     include: {
       _count: {

@@ -40,7 +40,6 @@ export const authOptions = {
 
                 try {
                     const user = await prisma.user.findUnique({
-                        //@ts-expect-error // #
                         where: {
                             email:emailVaildation.data,
 
@@ -65,7 +64,6 @@ export const authOptions = {
                         const hashedPassword = await bcrypt.hash(passwordValidation.data , 10);
 
                         const authUser = await prisma.user.update({
-                            //@ts-expect-error ?? #
                             where: {
                                 email: emailVaildation.data,
                             
@@ -114,7 +112,6 @@ export const authOptions = {
         async session({session, token}: {session: Session,token: JWT}) {
             try {
                 const user = await prisma.user.findUnique({
-                    //@ts-expect-error //#
                     where:{
                         email: token.email ?? ""
                     }
@@ -136,7 +133,6 @@ export const authOptions = {
                 if (account?.provider === "google") {
         
                   const user = await prisma.user.findUnique({
-                    // @ts-expect-error // #
                     where: {
                       email: profile?.email ?? "",
                     }
