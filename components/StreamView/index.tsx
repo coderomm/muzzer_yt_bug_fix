@@ -388,10 +388,6 @@ export default function StreamView({
                         "Add to Queue"
                       )}
                     </Button>
-
-                    <Button type="submit" className="w-full">
-                      Pay and Play
-                    </Button>
                   </form>
 
                   {inputLink && inputLink.match(YT_REGEX) && !loading && (
@@ -418,7 +414,6 @@ export default function StreamView({
                                   ref={videoPlayerRef}
                                   className="w-full object-contain"
                                 />
-                                {/* <iframe width="100%" height="300" src={`https://www.youtube.com/embed/${currentVideo.extractedId}?autoplay=1`}  allow="autoplay"></iframe> */}
                               </>
                             ) : (
                               <>

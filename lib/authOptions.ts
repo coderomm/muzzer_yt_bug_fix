@@ -7,8 +7,6 @@ import bcrypt from "bcryptjs";
 import { PrismaClientInitializationError } from "@prisma/client/runtime/library";
 import { JWT } from "next-auth/jwt";
 
-
-
 console.log(process.env.Hello)
 
 export const authOptions = {

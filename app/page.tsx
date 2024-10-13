@@ -4,7 +4,7 @@ import { MusicIcon, PlayCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import Appbar from "../components/Appbar";
 
-export default function LandingPage() {
+export default async function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100 ">
       <Appbar />
@@ -177,7 +177,6 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
         {/* Call to Action Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-800">
           <div className="container px-4 md:px-6">

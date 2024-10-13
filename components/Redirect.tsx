@@ -8,10 +8,9 @@ import React, { useEffect } from 'react'
 
 
 export default function Redirect() {
-  
     const router = useRouter();
     const session = useSession();
-
+    
     useEffect(() => {
         if(session.data?.user) {
             router.push('/dashboard')
