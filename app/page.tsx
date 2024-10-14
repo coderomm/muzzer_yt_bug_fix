@@ -4,7 +4,9 @@ import { MusicIcon, PlayCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import Appbar from "../components/Appbar";
 
+
 export default async function LandingPage() {
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100 ">
       <Appbar />
@@ -24,7 +26,12 @@ export default async function LandingPage() {
               </div>
               <div className="space-x-4">
                 <Button className="bg-purple-600 hover:bg-purple-700 text-white transition-colors duration-300 ease-in-out">
-                  Get Started
+                  <Link href={{
+                    pathname: "/auth",
+                    query: {authType : "signUp"}
+                  }}>
+                     Get Started
+                  </Link>
                 </Button>
                 <Button
                   variant="outline"

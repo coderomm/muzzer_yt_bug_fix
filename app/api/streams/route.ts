@@ -17,7 +17,7 @@ const CreateStreamSchema = z.object({
 const MAX_QUEUE_LEN = 10;
 
 export async function POST(req: NextRequest) {
-
+  
   const session = await getServerSession(authOptions) 
 
   const user = session?.user;
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
   if(!user?.id) {
     return NextResponse.json({message: "Unauthenticated"} , {status: 403})
   }
+
   try {
     const data = await CreateStreamSchema.parse(await req.json());
 

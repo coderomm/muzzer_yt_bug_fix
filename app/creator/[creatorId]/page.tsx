@@ -1,11 +1,20 @@
-
 import StreamView from "@/components/StreamView";
+import { useSession } from "next-auth/react";
 
+export default function CreatorPage() {
+  const {data: session , status} = useSession()
   
-export default function CreatorPage({ params: {creatorId} }: {params : {creatorId: string}}) {
+  if(status === 'loading') {
+    return <p>Loading...</p>
+  }
+
+  if(!session) {
+    return <p>SignIn first </p>
+  }
+  const creatorId = session.user.id;
   return (
     <div>
-      <StreamView creatorId={creatorId} playVideo={false}/>
+      <StreamView creatorId={creatorId as string} playVideo={false}/>
     </div>
   );
 }
