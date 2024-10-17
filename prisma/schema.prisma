@@ -22,6 +22,7 @@ model User {
   streams           Stream[]      @relation("user")
   upvotes           Upvote[]
   addedStreams      Stream[]      @relation("addedBy")
+  hostedSpaces      Space[]       @relation("hostedBy")
 }
 
 model Stream {
@@ -42,6 +43,8 @@ model Stream {
   addedByUser       User?               @relation("addedBy", fields: [addedBy], references: [id])
   user              User               @relation("user", fields: [userId], references: [id])
   CurrentStream     CurrentStream?
+  spaceId           String? 
+  space             Space?           @relation("spaceStreams" , fields: [spaceId] , references: [id] , onDelete: Cascade)
 }
 
 model CurrentStream {
@@ -49,7 +52,8 @@ model CurrentStream {
   userId      String
   streamId    String?       @unique
   stream      Stream?       @relation(fields: [streamId], references: [id])
-
+  spaceId     String?       @unique
+  space       Space?        @relation(fields: [spaceId] , references: [id] , onDelete: Cascade)
 }
 
 
@@ -61,6 +65,17 @@ model Upvote {
   stream      Stream        @relation(fields: [streamId], references: [id] , onDelete: Cascade)
 
   @@unique([userId , streamId])
+}
+
+
+model Space {
+  id            String         @id @default(uuid())
+  name          String
+  streams       Stream[]       @relation("spaceStreams")
+  hostId        String
+  host          User           @relation("hostedBy", fields: [hostId], references: [id])
+  isActive      Boolean        @default(true)
+  currentStream CurrentStream?
 }
 
 

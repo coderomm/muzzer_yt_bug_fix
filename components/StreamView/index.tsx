@@ -51,6 +51,7 @@ export default function StreamView({
 }: {
   creatorId: string;
   playVideo: boolean;
+
 }) {
   const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
   
@@ -162,6 +163,7 @@ export default function StreamView({
         const data = await res.json();
         setCurrentVideo(data.stream);
       }
+      // setPlayNextLoader(false)
     } catch (error) {
       console.error(error);
     }
@@ -184,6 +186,7 @@ export default function StreamView({
 
       if (event.data === 0) {
         playNext();
+        setPlayNextLoader(false)
       }
     }
     player.on("stateChange", eventHanlder);

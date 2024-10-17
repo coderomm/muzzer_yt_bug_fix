@@ -22,4 +22,5 @@ export default function DashboardPage() {
   )
 }
 
+
 export const dynamic = "auto";
