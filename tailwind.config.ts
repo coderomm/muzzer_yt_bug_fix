@@ -9,6 +9,25 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+		container: {
+			padding: "1rem"
+		},
+		keyframes: {
+			vibrate: {
+				'0%, 100%': { transform: 'translateX(0)' },
+				'25%': { transform: 'translateX(-2px)' },
+				'50%': { transform: 'translateX(2px)' },
+				'75%': { transform: 'translateX(-2px)' },
+			},
+			pulseVibrate: {
+				'0%, 100%': { transform: 'scaleY(1)' },
+				'50%': { transform: 'scaleY(0.5)' },
+			},
+		},
+		animation: {
+			vibrate: 'vibrate 0.2s infinite',
+			pulseVibrate: 'pulseVibrate 0.8s ease-in-out infinite',
+		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -58,6 +77,6 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 };
 export default config;

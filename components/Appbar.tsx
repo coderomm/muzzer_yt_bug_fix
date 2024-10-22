@@ -1,5 +1,5 @@
 "use client";
-import { HeadphonesIcon } from "lucide-react";
+import { HeadphonesIcon, LogIn, LogOut , } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,7 @@ export default function Appbar() {
 
   return (
     <>
-      <header className="px-4 lg:px-6 h-14 flex items-center bg-gray-800/90 backdrop-blur-sm sticky top-0 z-50">
+      <header className="px-4 lg:px-6 h-14 flex items-center bg-gray-700/50 backdrop-blur-sm sticky top-3 z-50 rounded-full">
         <Link className="flex items-center justify-center" href="/">
           <HeadphonesIcon
             onClick={() => {
@@ -22,7 +22,7 @@ export default function Appbar() {
           />
           <span className="font-bold text-purple-400">Muzzer</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <div className="ml-auto flex gap-4 sm:gap-6">
           {!session.data?.user ? (
             <Link
               href={{
@@ -34,7 +34,7 @@ export default function Appbar() {
             >
               <Button className="bg-purple-600 m-2 p-2 font-semibold rounded-sm">
                 {" "}
-                SignIn
+                SignIn <LogIn />
               </Button>
             </Link>
           ) : (
@@ -43,10 +43,10 @@ export default function Appbar() {
               onClick={() => signOut({ callbackUrl: "/" })}
             >
               {" "}
-              SignUp
+              SignUp <LogOut/>
             </Button>
           )}
-        </nav>
+        </div>
       </header>
     </>
   );

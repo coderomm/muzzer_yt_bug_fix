@@ -92,9 +92,9 @@ export const authOptions = {
             },
         })
     ],
-    // pages: {
-    //     signIn: '/auth'
-    // },
+    pages: {
+        signIn: '/auth'
+    },
     secret: process.env.AUTH_SECRET ?? "secret",
     session: {
         strategy: "jwt"

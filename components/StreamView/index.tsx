@@ -265,9 +265,7 @@ export default function StreamView({
           <Appbar />
           <div className="flex justify-center">
             <div className="grid w-screen max-w-screen-xl grid-cols-1 gap-4 pt-8 md:grid-cols-5">
-              {/* Queue start here */}
-              <div className="col-span-3">
-                <div className="space-y-6">
+              <div className="col-span-3 space-y-6">
                   <div className="flex flex-col items-start justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
                     <h2 className="text-3xl font-bold">Upcoming Songs</h2>
                     <div className="flex space-x-2">
@@ -338,7 +336,7 @@ export default function StreamView({
                         </Card>
                       ))}
                   </div>
-                </div>
+                
               </div>
               <Dialog
                 open={isEmptyQueueDialogOpen}
@@ -363,13 +361,12 @@ export default function StreamView({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-
               <div className="col-span-2">
-                <div className="mx-auto w-full max-w-4xl space-y-6 p-4">
+                <div className="mx-auto w-full max-w-4xl space-y-3 p-4">
                   {/* Add Song form start here  */}
 
                   <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-bold">Add a song</h1>
+                    <h1 className="text-3xl font-bold">Add a song</h1>
                   </div>
 
                   <form className="space-y-2">

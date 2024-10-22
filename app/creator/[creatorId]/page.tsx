@@ -8,6 +8,5 @@ export default function CreatorPage({creatorId} : {creatorId : string}) {
     </div>
   );
 }
-  
 
 export const dynamic = "auto";
