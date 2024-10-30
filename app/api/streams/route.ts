@@ -7,23 +7,20 @@ import { YT_REGEX } from "@/lib/utils";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-
 const CreateStreamSchema = z.object({
   creatorId: z.string(),
   url: z.string(),
 });
 
-
 const MAX_QUEUE_LEN = 10;
 
 export async function POST(req: NextRequest) {
-  
-  const session = await getServerSession(authOptions) 
+  const session = await getServerSession(authOptions);
 
   const user = session?.user;
 
-  if(!user?.id) {
-    return NextResponse.json({message: "Unauthenticated"} , {status: 403})
+  if (!user?.id) {
+    return NextResponse.json({ message: "Unauthenticated" }, { status: 403 });
   }
 
   try {
@@ -48,14 +45,13 @@ export async function POST(req: NextRequest) {
     console.log(res.title);
     console.log(res.thumbnail.thumbnails);
 
-
-    if(user.id !== data.creatorId) {
+    if (user.id !== data.creatorId) {
       await prisma.stream.count({
         where: {
           userId: data.creatorId,
           addedBy: user.id,
-        }
-      })
+        },
+      });
     }
     const duplicateSong = await prisma.stream.findFirst({
       where: {
@@ -70,13 +66,13 @@ export async function POST(req: NextRequest) {
         },
         {
           status: 429,
-        },
+        }
       );
     }
-    
+
     const thumbnails = res.thumbnail.thumbnails;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    thumbnails.sort((a:any, b:any) => a.upvotes < b.upvotes ? -1 : 1);
+    thumbnails.sort((a: any, b: any) => (a.upvotes < b.upvotes ? -1 : 1));
 
     const userExists = await prisma.user.findUnique({
       where: { id: data.creatorId },
@@ -91,13 +87,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
-
     const existingActiveStreams = await prisma.stream.count({
       where: {
-        userId: data.creatorId
-      }
-    })
+        userId: data.creatorId,
+      },
+    });
 
     if (existingActiveStreams >= MAX_QUEUE_LEN) {
       return NextResponse.json(
@@ -106,33 +100,33 @@ export async function POST(req: NextRequest) {
         },
         {
           status: 429,
-        },
+        }
       );
     }
-    
+
     const stream = await prisma.stream.create({
       data: {
-        userId:data.creatorId,
-        addedBy:user.id,
+        userId: data.creatorId,
+        addedBy: user.id,
         url: data.url,
         extractedId,
         type: "Youtube",
         title: res.title ?? "Can not find Video",
         smallImg:
-        (thumbnails.length > 1
+          (thumbnails.length > 1
             ? thumbnails[thumbnails.length - 2].url
             : thumbnails[thumbnails.length - 1].url) ??
           "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
-        bigImg: thumbnails[thumbnails.length - 1].url ?? "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
-      
+        bigImg:
+          thumbnails[thumbnails.length - 1].url ??
+          "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
       },
     });
     console.log("Created Stream", stream);
     return NextResponse.json({
       ...stream,
       hasUpvoted: false,
-      upvotes:0
-      
+      upvotes: 0,
     });
   } catch (error) {
     console.log(error);
@@ -144,64 +138,64 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl
+  const url = req.nextUrl;
   const creatorId = url.searchParams.get("creatorId");
 
-  console.log("creatorId" , creatorId);
+  console.log("getting creatorId", creatorId);
 
-  
   const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
-        return NextResponse.json({
-            message: "Unauthenticated",
-        },{
-            status: 403,
-        });
-    }
-
-    const user = session.user;
-  
-  
-
-  if(!creatorId) {
-    return NextResponse.json({message: "Creator Not Exist" }, {status:411})
+  if (!session?.user) {
+    return NextResponse.json(
+      {
+        message: "Unauthenticated",
+      },
+      {
+        status: 403,
+      }
+    );
   }
 
-  const [streams , activeStream] = await Promise.all([await prisma.stream.findMany({
-    where: {
-      userId: creatorId,
-      played: false,
-      addedBy: user.id
-    },
-    include: {
-      _count: {
-        select: {
-          upvotes: true
-        }
+  const user = session.user;
+
+  if (!creatorId) {
+    return NextResponse.json({ message: "Creator Not Exist" }, { status: 411 });
+  }
+  const [streams, activeStream] = await Promise.all([
+    await prisma.stream.findMany({
+      where: {
+        userId: creatorId,
+        played: false,
+        addedBy: user.id,
       },
-      upvotes: {
-        where: {
-          userId: user.id
-        }
-      }
-    }
-  }) , 
-  prisma.currentStream.findFirst({
-    where: {
-      userId:creatorId,
-    },
-    include: {
-      stream: true
-    }
-  })
-])
+      include: {
+        _count: {
+          select: {
+            upvotes: true,
+          },
+        },
+        upvotes: {
+          where: {
+            userId: user.id,
+          },
+        },
+      },
+    }),
+    prisma.currentStream.findFirst({
+      where: {
+        userId: creatorId,
+      },
+      include: {
+        stream: true,
+      },
+    }),
+  ]);
   return NextResponse.json({
-    streams: streams.map(({_count , ...rest}) => ({
+    streams: streams.map(({ _count, ...rest }) => ({
       ...rest,
       upvotes: _count.upvotes,
       hasUpvoted: rest.upvotes.length ? true : false,
     })),
-    activeStream
-  })
+    activeStream,
+  });
 }

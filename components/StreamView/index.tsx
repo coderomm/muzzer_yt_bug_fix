@@ -54,7 +54,6 @@ export default function StreamView({
 
 }) {
   const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
-  
   const [queue, setQueue] = useState<Video[]>([]);
   const [inputLink, setInputLink] = useState("");
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -65,13 +64,14 @@ export default function StreamView({
 
   async function refreshStream() {
     try {
+
       console.log("Fetching streams for creatorId:", creatorId);
-      
+
       const res = await fetch(`/api/streams/?creatorId=${creatorId}`, {
         credentials: "include",
       });
       const data = await res.json();
-      console.log(data.streams);
+      console.log(data);
       setQueue(
         data.streams.sort((a: { upvotes: number }, b: { upvotes: number }) =>
           a.upvotes < b.upvotes ? 1 : -1
@@ -89,10 +89,14 @@ export default function StreamView({
     }
   }
 
-  useEffect(() => {
+  useEffect(() => { 
     refreshStream();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const intervrral = setInterval(refreshStream , 10 * 1000)
+
+    clearInterval(intervrral)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,13 +161,17 @@ export default function StreamView({
     try {
       setPlayNextLoader(true);
       if (queue.length > 0) {
+        const nextVideo = queue[1];
+
+        setQueue((prevQueue) => prevQueue.slice(1));
+
+        setCurrentVideo(nextVideo);
         const res = await fetch("/api/streams/next", {
           method: "GET",
         });
         const data = await res.json();
         setCurrentVideo(data.stream);
       }
-      // setPlayNextLoader(false)
     } catch (error) {
       console.error(error);
     }
@@ -196,7 +204,6 @@ export default function StreamView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo, videoPlayerRef]);
-
   const handleShare = () => {
     const sharableLink = `${window.location.hostname}:3000/creator/${creatorId}`;
     navigator.clipboard.writeText(sharableLink).then(
@@ -299,8 +306,8 @@ export default function StreamView({
                           <Image
                             height={80}
                             width={128}
-                            src={video.smallImg}
-                            alt={`Thumbnail for ${video.title}`}
+                            src={video.smallImg || "/default-image.png"}
+                            alt={`Thumbnail for ${video.title || "unknown title"}`}
                             className="w-32 h-20 rounded object-cover"
                           />
                           <div className="flex-grow">

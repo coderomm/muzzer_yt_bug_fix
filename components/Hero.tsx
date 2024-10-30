@@ -58,7 +58,7 @@ export default function Hero() {
               <div className="w-1 h-16 bg-white animate-pulseVibrate delay-500"></div>
             </div>
             <div className="space-x-4">
-              <Button className="bg-white text-black mt-8 h-[50px] text-xl">
+              <Button className="bg-white text-black mt-8 h-[50px] text-xl hover:text-white">
                 Get Started
               </Button>
             </div>
