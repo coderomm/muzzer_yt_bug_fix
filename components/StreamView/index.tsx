@@ -62,6 +62,9 @@ export default function StreamView({
   // const [playVideo, setPlayVideo] = useState(false);
   const videoPlayerRef = useRef<HTMLDivElement | null>(null);
 
+  // const [payment , setPayment] = useState(100)
+
+
   async function refreshStream() {
     try {
 
@@ -92,9 +95,9 @@ export default function StreamView({
   useEffect(() => { 
     refreshStream();
 
-    const intervrral = setInterval(refreshStream , 10 * 1000)
+    const intervral = setInterval(refreshStream , 10 * 1000)
 
-    clearInterval(intervrral)
+    clearInterval(intervral)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -163,9 +166,9 @@ export default function StreamView({
       if (queue.length > 0) {
         const nextVideo = queue[1];
 
-        setQueue((prevQueue) => prevQueue.slice(1));
-
+        setQueue((prevQueue) => prevQueue.slice(1))
         setCurrentVideo(nextVideo);
+
         const res = await fetch("/api/streams/next", {
           method: "GET",
         });
@@ -245,6 +248,7 @@ export default function StreamView({
     }
     const data = await res.json();
     setQueue(data);
+    setloading(false)
   };
 
   const handleEmptyQueue = async () => {
@@ -265,6 +269,7 @@ export default function StreamView({
       console.error(error)
     }
   }
+
   return (
     <>
       <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100 ">
@@ -306,8 +311,8 @@ export default function StreamView({
                           <Image
                             height={80}
                             width={128}
-                            src={video.smallImg || "/default-image.png"}
-                            alt={`Thumbnail for ${video.title || "unknown title"}`}
+                            src={video.smallImg}
+                            alt={`Thumbnail for ${video.title}`}
                             className="w-32 h-20 rounded object-cover"
                           />
                           <div className="flex-grow">
@@ -349,7 +354,7 @@ export default function StreamView({
                 open={isEmptyQueueDialogOpen}
                 onOpenChange={setIsEmptyQueueDialogOpen}
               >
-                <DialogContent >
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Empty Queue</DialogTitle>
                     <DialogDescription>
@@ -407,7 +412,6 @@ export default function StreamView({
                       </CardContent>
                     </Card>
                   )}
-
                   {/* Video Playing */}
                   <div className="space-y-2">
                     <h2 className="text-2xl font-bold">Now Playing</h2>

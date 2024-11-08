@@ -46,13 +46,31 @@ export async function POST(req: NextRequest) {
     console.log(res.thumbnail.thumbnails);
 
     if (user.id !== data.creatorId) {
-      await prisma.stream.count({
+      const stream = await prisma.stream.count({
         where: {
           userId: data.creatorId,
           addedBy: user.id,
         },
       });
+
+      if(stream > MAX_QUEUE_LEN) {
+
+        const hasPayment = await prisma.member.findFirst( {
+          where: {
+            userId: user.id,
+            creatorId: data.creatorId,
+            status: "paid",
+          }
+        })
+        if (!hasPayment) {
+          return NextResponse.json(
+            { message: "Payment required to add more songs" },
+            { status: 402 } // Status 402 is for payment required
+          );
+        }
+      }
     }
+
     const duplicateSong = await prisma.stream.findFirst({
       where: {
         userId: data.creatorId,
@@ -103,7 +121,6 @@ export async function POST(req: NextRequest) {
         }
       );
     }
-
     const stream = await prisma.stream.create({
       data: {
         userId: data.creatorId,
@@ -123,6 +140,8 @@ export async function POST(req: NextRequest) {
       },
     });
     console.log("Created Stream", stream);
+
+
     return NextResponse.json({
       ...stream,
       hasUpvoted: false,
@@ -190,6 +209,7 @@ export async function GET(req: NextRequest) {
       },
     }),
   ]);
+
   return NextResponse.json({
     streams: streams.map(({ _count, ...rest }) => ({
       ...rest,
