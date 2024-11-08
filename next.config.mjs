@@ -6,5 +6,7 @@ const nextConfig = {
         domains: ['images.unsplash.com','i.ytimg.com' , 'hqdefault.jpg'],
       },
 };
-
+module.exports = {
+  basePath: '/client',
+}
 export default nextConfig;

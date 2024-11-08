@@ -7,6 +7,12 @@
           "buildCommand": "npm run prisma-generate && next build"
         }
       }
-    ]
+    ],
+    "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "client/$1"
+    }
+  ]
   }
   
