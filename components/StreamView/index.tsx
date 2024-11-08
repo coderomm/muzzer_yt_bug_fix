@@ -62,7 +62,7 @@ export default function StreamView({
   // const [playVideo, setPlayVideo] = useState(false);
   const videoPlayerRef = useRef<HTMLDivElement | null>(null);
 
-  // const [payment , setPayment] = useState(100)
+
 
 
   async function refreshStream() {

@@ -79,14 +79,6 @@ model Space {
 }
 
 
-model Member {
-  id         String   @id @default(uuid())
-  userId     String
-  creatorId  String
-  status     String  @default("pending")
-  createdAt  DateTime @default(now())
-}
-
 enum StreamType {
   Spotify
   Youtube
