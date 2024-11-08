@@ -96,6 +96,7 @@ export const authOptions = {
         signIn: '/auth'
     },
     secret: process.env.AUTH_SECRET ?? "secret",
+    debug: true,
     session: {
         strategy: "jwt"
     },
