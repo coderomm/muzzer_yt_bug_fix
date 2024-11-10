@@ -4,7 +4,7 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": {
-        "buildCommand": "npm run prisma-generate && next build"
+        "buildCommand": "npm run prisma-generate && npm run build"
       }
     }
   ],
@@ -15,3 +15,4 @@
     }
   ]
 }
+
