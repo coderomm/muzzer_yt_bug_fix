@@ -1,18 +1,17 @@
 {
-    "builds": [
-      {
-        "src": "package.json",
-        "use": "@vercel/next",
-        "config": {
-          "buildCommand": "npm run prisma-generate && next build"
-        }
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "buildCommand": "npm run prisma-generate && next build"
       }
-    ],
-    "rewrites": [
+    }
+  ],
+  "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/"
     }
   ]
-  }
-  
+}
