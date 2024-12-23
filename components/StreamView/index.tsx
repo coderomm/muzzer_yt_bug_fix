@@ -375,8 +375,6 @@ export default function StreamView({
               </Dialog>
               <div className="col-span-2">
                 <div className="mx-auto w-full max-w-4xl space-y-3 p-4">
-                  {/* Add Song form start here  */}
-
                   <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold">Add a song</h1>
                   </div>
@@ -412,7 +410,7 @@ export default function StreamView({
                       </CardContent>
                     </Card>
                   )}
-                  {/* Video Playing */}
+
                   <div className="space-y-2">
                     <h2 className="text-2xl font-bold">Now Playing</h2>
                     <Card>
