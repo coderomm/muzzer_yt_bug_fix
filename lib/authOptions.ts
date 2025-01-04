@@ -95,7 +95,7 @@ export const authOptions = {
         signIn: '/auth'
     },
     secret: process.env.AUTH_SECRET ?? "secret",
-    debug: true,
+
     session: {
         strategy: "jwt"
     },
@@ -151,8 +151,6 @@ export const authOptions = {
                 //throw error;
                 return false;
             }
-            return true;
         }
-        
     }
 }  satisfies NextAuthOptions
