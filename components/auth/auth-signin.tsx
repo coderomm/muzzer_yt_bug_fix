@@ -22,7 +22,7 @@ export default function SignInCard({ setFormType: setState }: SignupProps) {
 
   const signInWithProvider = async (provider: "google" | "credentials") => {
     try {
-      if (provider === 'credentials') {
+      if (provider === "credentials") {
         const res = signIn(provider, {
           email,
           password,
@@ -62,7 +62,9 @@ export default function SignInCard({ setFormType: setState }: SignupProps) {
 
   const handleCredentialSignUp = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("sign e" , e)
     setError("");
+    
     setPending(true);
     signInWithProvider("credentials");
   };
